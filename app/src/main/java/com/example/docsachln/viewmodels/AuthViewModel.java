@@ -79,14 +79,20 @@ public class AuthViewModel extends AndroidViewModel {
         isLoading.setValue(true);
 
         authRepository.signUp(email, password, username, new Callback() {
+            // AuthViewModel.java -> hàm signUp
+
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 isLoading.postValue(false);
-
                 if (response.isSuccessful()) {
                     loginSuccess.postValue(true);
                 } else {
-                    errorMessage.postValue("Đăng ký thất bại. Email có thể đã được sử dụng.");
+                    // 🔴 SỬA ĐOẠN NÀY: Lấy lỗi chi tiết từ Supabase
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    android.util.Log.e("REGISTER_DEBUG", "Sign Up Failed: " + errorBody);
+
+                    // Hiển thị lỗi thật lên màn hình để bạn đọc
+                    errorMessage.postValue("Lỗi: " + errorBody);
                 }
             }
 

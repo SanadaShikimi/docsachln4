@@ -76,4 +76,5 @@ public class PreferenceManager {
     public String getAccessToken() {
         return preferences.getString(Constants.KEY_ACCESS_TOKEN, null);
     }
+
 }

@@ -2,6 +2,7 @@ package com.example.docsachln.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log; // ✅ Đã thêm thư viện Log
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,8 +15,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.docsachln.MainActivity;
 import com.example.docsachln.R;
-import com.example.docsachln.ui.main.MainActivity;
+// Lưu ý: Kiểm tra lại package của MainActivity cho đúng với project của bạn
+// Ví dụ: import com.example.docsachln.ui.main.MainActivity;
 import com.example.docsachln.viewmodels.AuthViewModel;
 
 public class LoginActivity extends AppCompatActivity {
@@ -26,7 +29,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvRegister;
     private ProgressBar progressBar;
 
-    // Google Auth Helper (từ đoạn chat cũ của bạn)
     private GoogleAuthHelper googleAuthHelper;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
 
@@ -38,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
         // Khởi tạo ViewModel
         authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        // Khởi tạo Google Auth
+        // Khởi tạo Google Auth Helper
         googleAuthHelper = new GoogleAuthHelper(this);
 
         initViews();
@@ -61,11 +63,14 @@ public class LoginActivity extends AppCompatActivity {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
             btnLogin.setEnabled(!isLoading);
             btnGoogleSignIn.setEnabled(!isLoading);
+            etEmail.setEnabled(!isLoading);
+            etPassword.setEnabled(!isLoading);
         });
 
-        // Quan sát lỗi
+        // Quan sát lỗi từ ViewModel (Lỗi Supabase trả về)
         authViewModel.getErrorMessage().observe(this, error -> {
             if (error != null) {
+                Log.e("LOGIN_DEBUG", "Supabase Error: " + error); // ✅ Log lỗi Supabase
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }
         });
@@ -73,6 +78,7 @@ public class LoginActivity extends AppCompatActivity {
         // Quan sát đăng nhập thành công
         authViewModel.getLoginSuccess().observe(this, isSuccess -> {
             if (isSuccess) {
+                Log.d("LOGIN_DEBUG", "Login Success! Navigating to Main."); // ✅ Log thành công
                 Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
@@ -107,26 +113,29 @@ public class LoginActivity extends AppCompatActivity {
                         googleAuthHelper.handleSignInResult(data, new GoogleAuthHelper.GoogleAuthCallback() {
                             @Override
                             public void onSuccess(String idToken) {
-                                // Gọi ViewModel để verify với Supabase
-                                // Cần tạo hàm này trong AuthViewModel hoặc gọi repo trực tiếp
-                                // Nhưng tốt nhất là qua ViewModel.
-                                // Tạm thời gọi trực tiếp repo ở đây nếu ViewModel chưa có hàm này,
-                                // nhưng bạn đã có hàm signInWithGoogle trong AuthRepository rồi.
-                                // Hãy thêm hàm signInWithGoogle vào AuthViewModel (xem chú thích bên dưới)
+                                // ✅ Log ID Token để kiểm tra xem đã lấy được từ Google chưa
+                                Log.d("LOGIN_DEBUG", "Google ID Token received: " + idToken);
+
+                                // Gửi token lên Supabase để xác thực
                                 authViewModel.signInWithGoogle(idToken);
                             }
 
                             @Override
                             public void onError(String error) {
-                                Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
+                                // 🔴 LOG QUAN TRỌNG: Xem lỗi Google ở đây (thường là mã 10, 12500, ...)
+                                Log.e("LOGIN_DEBUG", "Google Sign-In Failed: " + error);
+                                Toast.makeText(LoginActivity.this, "Lỗi Google: " + error, Toast.LENGTH_LONG).show();
                             }
                         });
+                    } else {
+                        Log.e("LOGIN_DEBUG", "Google Sign-In Cancelled or Failed. Result Code: " + result.getResultCode());
                     }
                 }
         );
 
         // Nút Google Sign In
         btnGoogleSignIn.setOnClickListener(v -> {
+            Log.d("LOGIN_DEBUG", "Click Google Sign In Button");
             googleAuthHelper.signIn(googleSignInLauncher);
         });
     }
