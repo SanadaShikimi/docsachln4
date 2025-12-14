@@ -2,6 +2,8 @@ package com.example.docsachln.repositories;
 
 import android.content.Context;
 import com.example.docsachln.api.ChapterService;
+import com.example.docsachln.api.SupabaseClient;
+
 import okhttp3.Callback;
 
 public class ChapterRepository {
@@ -29,5 +31,8 @@ public class ChapterRepository {
 
     public void deleteChapter(String chapterId, Callback callback) {
         chapterService.deleteChapter(chapterId, callback);
+    }
+    public void getChapterByNumber(String bookId, int chapterNumber, Callback callback) {
+        chapterService.getChapterByNumber(bookId, chapterNumber, callback);
     }
 }

@@ -79,7 +79,7 @@ public class AuthService {
     public void getCurrentUser(Callback callback) {
         supabaseClient.get("/auth/v1/user", callback);
     }
-    // sign in wwith google
+    // signin wwith google
     public void signInWithGoogle(String idToken, Callback callback) {
         try {
             JSONObject body = new JSONObject();

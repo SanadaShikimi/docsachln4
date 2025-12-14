@@ -145,4 +145,28 @@ public class BookViewModel extends AndroidViewModel {
             }
         });
     }
+    public void loadUserBooks(String userId) {
+        isLoading.setValue(true);
+        bookRepository.getUserBooks(userId, new Callback() {
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                isLoading.postValue(false);
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string();
+                    Type listType = new TypeToken<List<Book>>(){}.getType();
+                    List<Book> bookList = gson.fromJson(responseBody, listType);
+                    books.postValue(bookList != null ? bookList : new ArrayList<>());
+                } else {
+                    errorMessage.postValue("Không thể tải sách của bạn");
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                isLoading.postValue(false);
+                errorMessage.postValue("Lỗi kết nối: " + e.getMessage());
+            }
+        });
+    }
+
 }

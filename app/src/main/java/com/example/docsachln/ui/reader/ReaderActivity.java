@@ -1,9 +1,8 @@
 package com.example.docsachln.ui.reader;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageView; // Import ImageView
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -37,6 +36,7 @@ public class ReaderActivity extends AppCompatActivity implements ReaderSettingsD
     private View toolbar, bottomMenu;
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
+    private ImageView btnBookmark; // Nút Bookmark
 
     private boolean isControlsVisible = false;
 
@@ -66,12 +66,19 @@ public class ReaderActivity extends AppCompatActivity implements ReaderSettingsD
         progressBar = findViewById(R.id.progress_bar);
         scrollView = findViewById(R.id.scroll_view);
 
+        // Tìm nút bookmark trong toolbar
+        btnBookmark = findViewById(R.id.btn_bookmark);
+
         // Setup Toolbar
-        ((Toolbar) toolbar).setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
-        ((Toolbar) toolbar).setNavigationOnClickListener(v -> finish());
+        Toolbar toolbarView = (Toolbar) toolbar;
+        toolbarView.setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
+        toolbarView.setNavigationOnClickListener(v -> finish());
 
         // Toggle controls on tap
         tvContent.setOnClickListener(v -> toggleControls());
+
+        // Xử lý sự kiện bấm nút Bookmark
+        btnBookmark.setOnClickListener(v -> toggleBookmark());
 
         // Open Settings
         findViewById(R.id.btn_settings).setOnClickListener(v -> {
@@ -108,7 +115,13 @@ public class ReaderActivity extends AppCompatActivity implements ReaderSettingsD
                                 tvTitle.setText(chapter.getTitle());
                                 tvContent.setText(chapter.getContent());
 
-                                // Save History
+                                // 1. Lưu trạng thái đã đọc (để tô màu xám ở danh sách chương)
+                                preferenceManager.markChapterAsRead(chapterId);
+
+                                // 2. Cập nhật icon Bookmark (kiểm tra xem chương này có phải bookmark không)
+                                checkBookmarkStatus();
+
+                                // Save History (Backend)
                                 historyViewModel.updateProgress(
                                         preferenceManager.getUserId(),
                                         bookId,
@@ -128,6 +141,43 @@ public class ReaderActivity extends AppCompatActivity implements ReaderSettingsD
                 runOnUiThread(() -> progressBar.setVisibility(View.GONE));
             }
         });
+    }
+
+    // Logic kiểm tra bookmark để hiển thị icon đúng
+    private void checkBookmarkStatus() {
+        String savedBookmarkChapterId = preferenceManager.getBookmark(bookId);
+        boolean isBookmarked = chapterId.equals(savedBookmarkChapterId);
+        updateBookmarkIcon(isBookmarked);
+    }
+
+    // Logic bấm nút bookmark
+    private void toggleBookmark() {
+        String savedBookmarkChapterId = preferenceManager.getBookmark(bookId);
+
+        if (chapterId.equals(savedBookmarkChapterId)) {
+            // Nếu đang bookmark chương này -> Bấm cái nữa là Xóa bookmark
+            preferenceManager.removeBookmark(bookId);
+            updateBookmarkIcon(false);
+            Toast.makeText(this, "Đã bỏ dấu trang", Toast.LENGTH_SHORT).show();
+        } else {
+            // Nếu chưa bookmark hoặc đang bookmark chương khác -> Lưu chương này làm bookmark mới
+            preferenceManager.saveBookmark(bookId, chapterId);
+            updateBookmarkIcon(true);
+            Toast.makeText(this, "Đã lưu dấu trang", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateBookmarkIcon(boolean isBookmarked) {
+        if (isBookmarked) {
+            // Icon đã lưu (đậm/đầy) - Bạn cần có drawable này
+            btnBookmark.setImageResource(R.drawable.ic_bookmark_filled);
+            // Nếu muốn đổi màu icon sang màu xanh như docln (ví dụ)
+            // btnBookmark.setColorFilter(Color.parseColor("#00AAFF"));
+        } else {
+            // Icon chưa lưu (viền) - Bạn cần có drawable này
+            btnBookmark.setImageResource(R.drawable.ic_bookmark_border);
+            // btnBookmark.clearColorFilter();
+        }
     }
 
     private void toggleControls() {

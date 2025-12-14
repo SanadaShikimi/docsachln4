@@ -9,6 +9,7 @@ public class ChapterService {
     private final SupabaseClient supabaseClient;
 
     public ChapterService(Context context) {
+        // Khởi tạo client 1 lần duy nhất
         this.supabaseClient = SupabaseClient.getInstance(context);
     }
 
@@ -57,5 +58,15 @@ public class ChapterService {
     public void deleteChapter(String chapterId, Callback callback) {
         String endpoint = "/rest/v1/chapters?id=eq." + chapterId;
         supabaseClient.delete(endpoint, callback);
+    }
+
+    // ✅ ĐÃ SỬA: Lấy chương theo số thứ tự (cho nút Next/Prev)
+    public void getChapterByNumber(String bookId, int chapterNumber, Callback callback) {
+        // 1. Thêm /rest/v1/ cho đồng bộ
+        // 2. Thêm select=* để đảm bảo lấy về đủ dữ liệu
+        String endpoint = "/rest/v1/chapters?select=*&book_id=eq." + bookId + "&chapter_number=eq." + chapterNumber;
+
+        // Sử dụng biến instance 'supabaseClient' đã khởi tạo ở trên
+        this.supabaseClient.get(endpoint, callback);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.docsachln.ui.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -83,7 +84,10 @@ public class HomeFragment extends Fragment {
     }
 
     private void onBookClick(Book book) {
-        // TODO: Navigate to BookDetailActivity
-        Toast.makeText(requireContext(), "Clicked: " + book.getTitle(), Toast.LENGTH_SHORT).show();
-    }
+        Intent intent = new Intent(requireContext(), com.example.docsachln.ui.book.BookDetailActivity.class);
+
+        // Truyền ID sách sang màn hình chi tiết để nó biết cần tải sách nào
+        intent.putExtra("BOOK_ID", book.getId());
+
+        startActivity(intent);    }
 }
